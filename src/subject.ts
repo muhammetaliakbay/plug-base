@@ -6,10 +6,13 @@ export interface InvocationContext<ARGS extends any[], T> {
 }
 export type Invocation<ARGS extends any[], T> = (...args: ARGS) => T;
 
+export interface ModifierRegistration {
+    unregister();
+}
+
 export interface Subject<ARGS extends any[], T> {
-    pre(modifier: Modifier<ARGS, T>): void;
-    post(modifier: Modifier<ARGS, T>): void;
-    remove(modifier: Modifier<ARGS, T>): void;
+    pre(modifier: Modifier<ARGS, T>): ModifierRegistration;
+    post(modifier: Modifier<ARGS, T>): ModifierRegistration;
     invoke(...args: ARGS): T | undefined;
 }
 
@@ -17,19 +20,41 @@ export function createSubject<ARGS extends any[], T>(): Subject<ARGS, T> {
     return new SubjectImpl<ARGS, T>();
 }
 
+class ModifierRegistrationImpl<ARGS extends any[], T> implements ModifierRegistration {
+    constructor(
+        readonly subject: SubjectImpl<ARGS, T>,
+        readonly modifier: Modifier<ARGS, T>
+    ) {
+    }
+
+    unregister() {
+        this.subject.unregister(this);
+    }
+}
+
 export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
-    private modifiers: Modifier<ARGS, T>[] = [];
+    private modifiers: ModifierRegistrationImpl<ARGS, T>[] = [];
 
-    pre(modifier: Modifier<ARGS, T>): void {
-        this.modifiers.push(modifier);
+    pre(modifier: Modifier<ARGS, T>): ModifierRegistration {
+        const reg = new ModifierRegistrationImpl<ARGS, T>(
+            this,
+            modifier
+        );
+        this.modifiers.push(reg);
+        return reg;
     }
 
-    post(modifier: Modifier<ARGS, T>): void {
-        this.modifiers.splice(0, 0, modifier);
+    post(modifier: Modifier<ARGS, T>): ModifierRegistration {
+        const reg = new ModifierRegistrationImpl<ARGS, T>(
+            this,
+            modifier
+        );
+        this.modifiers.splice(0, 0, reg);
+        return reg;
     }
 
-    remove(modifier: Modifier<ARGS, T>) {
-        const index = this.modifiers.indexOf(modifier);
+    unregister(modifierRegistration: ModifierRegistration) {
+        const index = this.modifiers.indexOf(modifierRegistration as any);
         if (index > -1) {
             this.modifiers.splice(index, 1);
         }
@@ -53,7 +78,9 @@ export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
 
     invoke(...args: ARGS): T | undefined {
         if(this.modifiers.length > 0) {
-            const [modifier, ...overridden] = this.modifiers;
+            const [modifier, ...overridden] = this.modifiers.map(
+                reg => reg.modifier
+            );
             const invocation = SubjectImpl.invocation(
                 modifier, overridden
             );

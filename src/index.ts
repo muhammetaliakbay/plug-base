@@ -10,3 +10,8 @@ export {
     SubjectTree,
     createSubjectTree
 } from './subject-tree';
+
+export {
+    SubjectTreeProxy,
+    createSubjectTreeProxy
+} from './subject-tree-proxy';
