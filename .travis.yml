@@ -2,7 +2,7 @@ language: node_js
 node_js: 15
 
 install:
-  - npm install
+  - npm ci
 
 deploy:
   - provider: npm
