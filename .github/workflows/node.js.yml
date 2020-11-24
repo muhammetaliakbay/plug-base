@@ -13,6 +13,7 @@ jobs:
         with:
           node-version: '15.x'
       - run: npm ci
+      - run: npm run prepare
       - uses: JS-DevTools/npm-publish@v1
         with:
           token: ${{ secrets.NPM_TOKEN }}
