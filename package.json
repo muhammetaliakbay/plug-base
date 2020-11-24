@@ -2,10 +2,10 @@
   "name": "plugment",
   "version": "0.0.2",
   "scripts": {
-    "build": "npx tsc",
-    "lint": "npx eslint ./src/ --ext .ts",
+    "build": "tsc",
+    "lint": "eslint ./src/ --ext .ts",
     "prepare": "npm run build && npm test",
-    "test": "npx mocha --require source-map-support/register --require esm 'lib/**/*.spec.js'"
+    "test": "mocha --require source-map-support/register --require esm 'lib/**/*.spec.js'"
   },
   "files": [
     "lib/**/*.js",
