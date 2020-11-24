@@ -15,5 +15,5 @@ jobs:
       - run: npm ci
       - run: npm prepare
       - uses: JS-DevTools/npm-publish@v1
-          with:
-            token: ${{ secrets.NPM_TOKEN }}
+        with:
+          token: ${{ secrets.NPM_TOKEN }}
