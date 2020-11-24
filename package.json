@@ -2,7 +2,7 @@
   "name": "plugment",
   "version": "0.0.2",
   "scripts": {
-    "build": "tsc --version && tsc",
+    "build": "tsc",
     "lint": "eslint ./src/ --ext .ts",
     "prepare": "npm run build && npm test",
     "test": "mocha --require source-map-support/register --require esm 'lib/**/*.spec.js'"
