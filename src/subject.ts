@@ -5,7 +5,7 @@ export type Modifier<ARGS extends any[], T>
     = (this: InvocationContext<ARGS, T>, ...args: ARGS) => T | AsyncResult<T> | Promise<T> | Observable<T>;
 
 export interface InvocationContext<ARGS extends any[], T> {
-    overridden?: Invocation<ARGS, T>;
+    overridden: Invocation<ARGS, T>;
 }
 export type Invocation<ARGS extends any[], T> = (...args: ARGS) => AsyncResult<T>;
 
@@ -16,7 +16,7 @@ export interface ModifierRegistration {
 export interface Subject<ARGS extends any[], T> {
     pre(modifier: Modifier<ARGS, T>): ModifierRegistration;
     post(modifier: Modifier<ARGS, T>): ModifierRegistration;
-    invoke(...args: ARGS): AsyncResult<T> | undefined;
+    invoke(...args: ARGS): AsyncResult<T>;
 }
 
 export function createSubject<ARGS extends any[], T>(): Subject<ARGS, T> {
@@ -64,22 +64,28 @@ export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
     }
 
     private static invocation<ARGS extends any[], T>(
-        modifier: Modifier<ARGS, T>, overridden: Modifier<ARGS, T>[]
+        modifier: Modifier<ARGS, T>, overriddenModifiers: Modifier<ARGS, T>[]
     ): Invocation<ARGS, T> {
+        let overridden: Invocation<ARGS, T>;
+
+        if (overriddenModifiers.length > 0) {
+            const [next, ...veryNext] = overriddenModifiers;
+            overridden = SubjectImpl.invocation(next, veryNext);
+        } else {
+            overridden = () => AsyncResult.fromValue(); // EMPTY ASYNC RESULT
+        }
+
         const context: InvocationContext<ARGS, T> = {
+            overridden
         };
 
-        if (overridden.length > 0) {
-            const [next, ...veryNext] = overridden;
-            context.overridden = SubjectImpl.invocation(next, veryNext);
-        }
 
         return (...args: ARGS) => AsyncResult.fromValue(
             modifier.apply(context, args)
         );
     }
 
-    invoke(...args: ARGS): AsyncResult<T> | undefined {
+    invoke(...args: ARGS): AsyncResult<T> {
         if(this.modifiers.length > 0) {
             const [modifier, ...overridden] = this.modifiers.map(
                 reg => reg.modifier
@@ -89,7 +95,7 @@ export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
             );
             return invocation(...args);
         } else {
-            return undefined;
+            return AsyncResult.fromValue(); // EMPTY ASYNC RESULT
         }
     }
 }

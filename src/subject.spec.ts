@@ -1,11 +1,15 @@
-import { expect } from "chai";
+import { expect, use } from "chai";
+import ChaiAsPromised from 'chai-as-promised';
 import {createSubject, Modifier} from "./subject";
+import {NoResultError} from "./async-result";
+
+use(ChaiAsPromised);
 
 describe('Subject Tests', () => {
-    it('Invocation of empty subject must return undefined', () => {
+    it('Invocation of empty subject "asPromise" must throw NoResultError', async () => {
         const subject = createSubject<[], number>();
 
-        expect(subject.invoke()).to.be.undefined;
+        await expect(subject.invoke().asPromise()).to.be.rejectedWith(NoResultError);
     });
 
     it('Invocation of 1-level subject must return the first modifier\'s result', async () => {
@@ -60,11 +64,7 @@ describe('Subject Tests', () => {
         const subject = createSubject<[], number>();
 
         const modifier: Modifier<[], number> = async function () {
-            if (this.overridden == null) {
-                return 0;
-            } else {
-                return await this.overridden().asPromise() + 1;
-            }
+            return await this.overridden().asPromise().catch(() => -1) + 1;
         };
 
         subject.post(modifier);
