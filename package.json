@@ -1,6 +1,6 @@
 {
   "name": "plugment",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "scripts": {
     "build": "tsc",
     "lint": "eslint ./src/ --ext .ts",
