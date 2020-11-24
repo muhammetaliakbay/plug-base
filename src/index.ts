@@ -15,3 +15,12 @@ export {
     SubjectTreeProxy,
     createSubjectTreeProxy
 } from './subject-tree-proxy';
+
+export {
+    AsyncResult,
+    AsyncResultDataListener,
+    AsyncResultEndListener,
+    AsyncResultRequestListener,
+    EmptyBufferError,
+    NoResultError
+} from './async-result';

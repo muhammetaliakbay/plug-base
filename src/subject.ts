@@ -1,10 +1,13 @@
+import {AsyncResult} from "./async-result";
+import {Observable} from "rxjs";
+
 export type Modifier<ARGS extends any[], T>
-    = (this: InvocationContext<ARGS, T>, ...args: ARGS) => T;
+    = (this: InvocationContext<ARGS, T>, ...args: ARGS) => T | AsyncResult<T> | Promise<T> | Observable<T>;
 
 export interface InvocationContext<ARGS extends any[], T> {
     overridden?: Invocation<ARGS, T>;
 }
-export type Invocation<ARGS extends any[], T> = (...args: ARGS) => T;
+export type Invocation<ARGS extends any[], T> = (...args: ARGS) => AsyncResult<T>;
 
 export interface ModifierRegistration {
     unregister();
@@ -13,7 +16,7 @@ export interface ModifierRegistration {
 export interface Subject<ARGS extends any[], T> {
     pre(modifier: Modifier<ARGS, T>): ModifierRegistration;
     post(modifier: Modifier<ARGS, T>): ModifierRegistration;
-    invoke(...args: ARGS): T | undefined;
+    invoke(...args: ARGS): AsyncResult<T> | undefined;
 }
 
 export function createSubject<ARGS extends any[], T>(): Subject<ARGS, T> {
@@ -71,12 +74,12 @@ export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
             context.overridden = SubjectImpl.invocation(next, veryNext);
         }
 
-        return modifier.bind(
-            context
+        return (...args: ARGS) => AsyncResult.fromValue(
+            modifier.apply(context, args)
         );
     }
 
-    invoke(...args: ARGS): T | undefined {
+    invoke(...args: ARGS): AsyncResult<T> | undefined {
         if(this.modifiers.length > 0) {
             const [modifier, ...overridden] = this.modifiers.map(
                 reg => reg.modifier
