@@ -4,6 +4,9 @@ node_js: 15
 install:
   - npm ci
 
+script:
+  - npm prepare
+
 cache:
   directories:
     - "node_modules"
