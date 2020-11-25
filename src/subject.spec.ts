@@ -12,6 +12,14 @@ describe('Subject Tests', () => {
         await expect(subject.invoke().asPromise()).to.be.rejectedWith(NoResultError);
     });
 
+    it('Invocation of empty subject must return genesis modifier\'s result', async () => {
+        const subject = createSubject<[], number>(
+            () => 11
+        );
+
+        expect(await subject.invoke().asPromise()).equals(11);
+    });
+
     it('Invocation of 1-level subject must return the first modifier\'s result', async () => {
         const subject = createSubject<[], number>();
 
@@ -51,7 +59,7 @@ describe('Subject Tests', () => {
 
         const firstModifier = () => 14;
         const secondModifier: Modifier<[], number> = async function () {
-            return await this.overridden().asPromise() + 1;
+            return (await this.overridden().asPromise()) + 1;
         };
 
         subject.post(firstModifier);
@@ -64,7 +72,7 @@ describe('Subject Tests', () => {
         const subject = createSubject<[], number>();
 
         const modifier: Modifier<[], number> = async function () {
-            return await this.overridden().asPromise().catch(() => -1) + 1;
+            return (await this.overridden().asPromise().catch(() => -1)) + 1;
         };
 
         subject.post(modifier);

@@ -19,8 +19,12 @@ export interface Subject<ARGS extends any[], T> {
     invoke(...args: ARGS): AsyncResult<T>;
 }
 
-export function createSubject<ARGS extends any[], T>(): Subject<ARGS, T> {
-    return new SubjectImpl<ARGS, T>();
+export function createSubject<ARGS extends any[], T>(
+    genesis?: Modifier<any, any>
+): Subject<ARGS, T> {
+    return new SubjectImpl<ARGS, T>(
+        genesis
+    );
 }
 
 class ModifierRegistrationImpl<ARGS extends any[], T> implements ModifierRegistration {
@@ -37,6 +41,11 @@ class ModifierRegistrationImpl<ARGS extends any[], T> implements ModifierRegistr
 
 export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
     private modifiers: ModifierRegistrationImpl<ARGS, T>[] = [];
+
+    constructor(
+        private genesis: Modifier<any, any> = () => AsyncResult.fromValue() // EMPTY ASYNC RESULT
+    ) {
+    }
 
     pre(modifier: Modifier<ARGS, T>): ModifierRegistration {
         const reg = new ModifierRegistrationImpl<ARGS, T>(
@@ -80,22 +89,23 @@ export class SubjectImpl<ARGS extends any[], T> implements Subject<ARGS, T> {
         };
 
 
-        return (...args: ARGS) => AsyncResult.fromValue(
+        return (...args: ARGS) => AsyncResult.from(
             modifier.apply(context, args)
         );
     }
 
     invoke(...args: ARGS): AsyncResult<T> {
-        if(this.modifiers.length > 0) {
-            const [modifier, ...overridden] = this.modifiers.map(
+        const modifiers = [
+            ...this.modifiers.map(
                 reg => reg.modifier
-            );
-            const invocation = SubjectImpl.invocation(
-                modifier, overridden
-            );
-            return invocation(...args);
-        } else {
-            return AsyncResult.fromValue(); // EMPTY ASYNC RESULT
-        }
+            ),
+            this.genesis
+        ]
+
+        const [modifier, ...overridden] = modifiers;
+        const invocation = SubjectImpl.invocation(
+            modifier, overridden
+        );
+        return invocation(...args);
     }
 }

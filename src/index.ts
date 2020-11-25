@@ -3,7 +3,8 @@ export {
     Subject,
     createSubject,
     Invocation,
-    InvocationContext
+    InvocationContext,
+    ModifierRegistration
 } from './subject';
 
 export {

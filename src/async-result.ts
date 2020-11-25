@@ -42,9 +42,13 @@ export class AsyncResult<T> implements AsyncResult<T> {
     static fromPromise<T>(promise: Promise<T>): AsyncResult<T> {
         const asyncResult = new AsyncResult<T>();
         promise.then(
-            value => asyncResult.push(value)
-        ).finally(
-            () => asyncResult.end()
+            value => {
+                asyncResult.push(value);
+                asyncResult.end();
+            },
+            reason => {
+                asyncResult.end();
+            }
         );
         return asyncResult;
     }
@@ -254,7 +258,7 @@ export class AsyncResult<T> implements AsyncResult<T> {
     when(event: 'request', listener: AsyncResultRequestListener, initial?: boolean): this;
     when(event: 'data' | 'end' | 'request', listener: AsyncResultDataListener | AsyncResultEndListener | AsyncResultRequestListener, initial: boolean = true): this {
 
-        const listeners = this.listeners['event'] ??= [];
+        const listeners = this.listeners[event] ??= [];
         const index = listeners.indexOf(listener);
         if (index === -1) {
             listeners.push(listener);
